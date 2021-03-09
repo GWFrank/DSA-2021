@@ -1,13 +1,3 @@
-# DSA W2
-
-## Motivation
-
-### Proving correctness of an algorithm
-
-### Pseudo code
-
-### Introduction to data structure
-
 ## Array
 
 #### Properties
@@ -27,5 +17,7 @@
 - naive approach : sequential search
 - sequential search with cut
   - when the next element is already larger than our target, we can cut.
-- 
+- binary search
+  - using cut multiple times
+  - need both ordered (for cut) and array (for fast access to compare)
 
