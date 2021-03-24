@@ -1,17 +1,11 @@
-/*
-Reference:
-https://www.geeksforgeeks.org/can-we-reverse-a-linked-list-in-less-than-on/
-https://stackoverflow.com/questions/26569728/using-xor-with-pointers-in-c
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 typedef struct node {
     int label;
-    uintptr_t adj;
+    struct node* nxt;
+    struct node* prv;
 } node;
 
 typedef struct llist {
@@ -26,12 +20,21 @@ llist* newStack() {
     return stack;
 }
 
+node* nxt(node* cur) {
+    return cur->nxt;
+}
+
+node* prv(node* cur) {
+    return cur->prv;
+}
+
 void push(llist* stack, int label) {
     node* new_node = malloc(sizeof(node));
     new_node->label = label;    
-    new_node->adj = (uintptr_t) stack->head;
+    new_node->nxt = stack->head;
+    new_node->prv = NULL;
     if (stack->head) {
-        stack->head->adj = stack->head->adj ^ (uintptr_t) new_node;
+        stack->head->prv = new_node;
     } else {
         stack->tail = new_node;
     }
@@ -43,38 +46,22 @@ int pop(llist* stack) {
     if (stack->head) {
         node* old_head = stack->head;
         popped = old_head->label;
-        stack->head = (node *) stack->head->adj;
-        if (stack->head) {
-            stack->head->adj = stack->head->adj ^ (uintptr_t) old_head;
-        } else {
+        stack->head = stack->head->nxt;
+        free(old_head);
+        if (stack->head) { 
+            stack->head->prv = NULL;
+        } else { // handle stack with only one element
             stack->tail = NULL;
         }
-        free(old_head);
     }
     return popped;
 }
 
 void migrate(llist* sa, llist* sb) {
-    // migrates sa to sb
-    // while (sa->head) {
-    //     // int l = pop(sa);
-    //     // push(sb, l);
-    //     push(sb, pop(sa));
-    // }
-    if (sa->head) {
-        if (sb->head) {
-            // connect sa's head to sb's head
-            sb->head->adj = sb->head->adj ^ (uintptr_t) sa->head;
-            sa->head->adj = sa->head->adj ^ (uintptr_t) sb->head;
-            // relocate sb's head at sa's tail
-            sb->head = sa->tail;
-        } else {
-            sb->tail = sa->head;
-            sb->head = sa->tail;
-        }
-        // empty sa
-        sa->head = NULL;
-        sa->tail = NULL;
+    while (sa->head) {
+        // int l = pop(sa);
+        // push(sb, l);
+        push(sb, pop(sa));
     }
 }
 
@@ -84,18 +71,14 @@ void printRails(llist** rails, int rail_num) {
         if (cur == 0) {
             printf("\n");
         } else {
-            node* prv = NULL;
-            uintptr_t nxt = 0;
             while (cur) {
                 printf("%d", cur->label);
-                nxt = (uintptr_t) prv ^ cur->adj;
-                if (nxt) {
+                if (cur->prv) {
                     printf(" ");
                 } else {
                     printf("\n");
                 }
-                prv = cur;
-                cur = (node *) nxt;
+                cur = cur->prv;
             }
         }
     }
@@ -129,6 +112,7 @@ int main(){
     }
 
     printRails(rails, rail_num);
+
 
     return 0;
 }
