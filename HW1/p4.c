@@ -4,15 +4,15 @@
 
 #define MAX_L 1000005
 
-double eval(char *str){
+long double eval(char *str){
     // split the line into segments by + and -
     // result is the curent result before last + or -
     // seg is the value of current segment
-    double result=0;
+    long double result=0;
     char cross_seg_op='+';
-    double seg=1;
+    long double seg=1;
     char in_seg_op='*';
-    double seg_pc=0;
+    long double seg_pc=0;
     int i=0;
     while (str[i] != 0) {
         switch (str[i]) {
@@ -46,6 +46,8 @@ double eval(char *str){
         case '(':
             seg_pc = eval(&str[i+1]);
             int par_cnt=0;
+            // jump i to the end of this parentheses
+            // bc this parenthese has been evaluated
             while (1) {
                 if (str[i] == '(') {
                     par_cnt++;
@@ -96,8 +98,8 @@ double eval(char *str){
 int main(){
     char line[MAX_L];
     while (scanf("%s", line) != EOF) {
-        double eval_result = eval(line);
-        printf("%lf\n", eval_result);
+        long double eval_result = eval(line);
+        printf("%.15LF\n", eval_result);
     }
     return 0;
 }
