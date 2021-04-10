@@ -7,7 +7,7 @@
 #define MAX_N 50005
 #define MAX_X 100000
 #define MIN_X -100000
-#define MAX_NODES 300
+#define MAX_NODES 1000
 
 int compare(const void *a, const void *b) {
     // compare function for qsort
@@ -139,7 +139,7 @@ node* locateNodePtr(llist* LList, int n) {
 }
 
 int binSearchLs(int* sorted, int len, int val) {
-    int left = 0; int right = len;
+    int left = -1; int right = len;
     int mid = (left+right)/2;
     while (1) {
         if ((sorted[mid] >= val && mid == 0) || (mid == len)) {
@@ -155,6 +155,17 @@ int binSearchLs(int* sorted, int len, int val) {
         mid = (left+right)/2;
     }
     return mid;
+    /*
+    while (left != right-1) {
+        if (sorted[mid] < val) {
+            left = mid;
+        } else {
+            right = mid;
+        }
+        mid = (left+right)/2;
+    }
+    return left+1;
+    */
 }
 
 int query(llist* LList, int l, int r, int k) {
@@ -273,6 +284,7 @@ int main(){
     }
     llist* list = buildFromArr(init_arr, n, seg_len);
     free(init_arr);
+    
     
     for (int i=0; i<q; i++) {
         char cmd[10];

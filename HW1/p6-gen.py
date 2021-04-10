@@ -1,13 +1,14 @@
 from random import choice, randint
 # cmds = ["Reverse", "Insert", "Delete", "Query"]
 cmds = ["Query"]
-n = 50000
-q = 50000
-arr = [randint(-100000,100000) for i in range(n)]
+n = 5*10**4
+q = 5*10**4
+# n = 10
+# q = 50
+arr = [randint(-10**5, 10**5) for i in range(n)]
 
 input_f = "p6-in"
 sol_f = "p6-ans"
-
 with open(input_f, mode="w+") as f:
     arr_str = ""
     for i in range(len(arr)):
@@ -40,3 +41,4 @@ with open(input_f, mode="a") as f1:
                 # sliced = sorted(arr[l-1:r])
                 answer = str(sliced[k-1]) + "\n"
                 f2.write(answer)
+
