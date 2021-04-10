@@ -121,42 +121,35 @@ int locateNode(llist* LList, int n) {
     return -1;
 }
 
+node* locateNodePtr(llist* LList, int n) {
+    // find out which node does n-th element locate
+    // n range: 1 ~ LList->size
+    // return pointer to the node
+    node* cur_node = LList->head;
+    int ele_cnt=1;
+    while (cur_node) {
+        if (n < ele_cnt+cur_node->size) {
+            return cur_node;
+        } else {
+            ele_cnt += cur_node->size;
+            cur_node = cur_node->nxt;
+        }
+    }
+    return NULL;
+}
+
 int binSearchLs(int* sorted, int len, int val) {
-    // printf("Binary Searching\n");
     int left = 0; int right = len;
     int mid = (left+right)/2;
     while (1) {
-        // printf("%d %d %d\n", left, mid, right);
-        // printf("%d %d\n", sorted[mid], val);
         if ((sorted[mid] >= val && mid == 0) || (mid == len)) {
             break;
-        }
-        if (sorted[mid-1] < val && sorted[mid] >= val) {
+        } else if (sorted[mid-1] < val && sorted[mid] >= val) {
             break;
         }
         if (sorted[mid] < val) {
             left = mid+1;
-        } else if (sorted[mid-1] >= val) {
-            right = mid-1;
-        }
-        mid = (left+right)/2;
-    }
-    return mid;
-}
-
-int binSearchLe(int* sorted, int len, int val) {
-    int left = 0; int right = len;
-    int mid = (left+right)/2;
-    while (1) {
-        if ((sorted[mid] > val && mid == 0) || (mid == len)) {
-            break;
-        }
-        if (sorted[mid-1] <= val && sorted[mid] > val) {
-            break;
-        }
-        if (sorted[mid] <= val) {
-            left = mid+1;
-        } else if (sorted[mid-1] > val) {
+        } else {
             right = mid-1;
         }
         mid = (left+right)/2;
@@ -165,6 +158,7 @@ int binSearchLe(int* sorted, int len, int val) {
 }
 
 int query(llist* LList, int l, int r, int k) {
+    // /*
     int l_node_num = locateNode(LList, l);
     int r_node_num = locateNode(LList, r);
     // printf("%d %d\n", l_node_num, r_node_num);
@@ -184,22 +178,44 @@ int query(llist* LList, int l, int r, int k) {
         cur_node = cur_node->nxt;
     }
     r_node = cur_node;
-    // printf("%d %d %d\n", l, r, k);
-    // printf("%d\n", comp_cnt);
+    // */
+
     int low = MIN_X; int high = MAX_X; int mid = (high+low)/2;
-    while (1) {
-        int ls=0; int le=0;
-        // printf("%d %d %d\n", low, mid, high);
-        
-        if (r_node == l_node) {
-            for (int idx=l-1; idx<r; idx++) {
-                if (l_node->unsorted[idx] < mid) {
-                    ls++; le++;
-                } else if (l_node->unsorted[idx] == mid) {
-                    le++;
+
+    if (r_node == l_node) {
+        while (1) {
+            int ls=0; int le=0;
+                for (int idx=l-1; idx<r; idx++) {
+                    if (l_node->unsorted[idx] < mid) {
+                        ls++; le++;
+                    } else if (l_node->unsorted[idx] == mid) {
+                        le++;
+                    }
                 }
+            if (ls < k && le >= k) {
+                break;
+            } else {
+                if (ls >= k) {
+                    high = mid-1;
+                } else if (le < k) {
+                    low = mid+1;
+                }
+                mid = (low+high)/2;
             }
-        } else {
+        }
+    } else {
+        if (l == 1) {
+            comp_nodes[comp_cnt] = l_node;
+            comp_cnt++;
+            l = l_node->size+1;
+        }
+        if (r == r_node->size) {
+            comp_nodes[comp_cnt] = r_node;
+            comp_cnt++;
+            r = 0;
+        } 
+        while (1) {
+            int ls=0; int le=0;
             for (int idx=l-1; idx < l_node->size; idx++) {
                 if (l_node->unsorted[idx] < mid) {
                     ls++; le++;
@@ -207,7 +223,6 @@ int query(llist* LList, int l, int r, int k) {
                     le++;
                 }
             }
-            // printf("%d %d\n", ls, le);
             for (int idx=0; idx<r; idx++) {
                 if (r_node->unsorted[idx] < mid) {
                     ls++; le++;
@@ -215,31 +230,30 @@ int query(llist* LList, int l, int r, int k) {
                     le++;
                 }
             }
-            // printf("%d %d\n", ls, le);
             for (int i=0; i<comp_cnt; i++) {
-                // printf("node %d\n", i+1+l_node_num);
                 int tmp_ls = binSearchLs(comp_nodes[i]->sorted, comp_nodes[i]->size, mid);
-                int tmp_le = binSearchLe(comp_nodes[i]->sorted, comp_nodes[i]->size, mid);
-                // printf("%d %d\n", tmp_ls, tmp_le);
+                int tmp_eq = 0;
+                for (int j=tmp_ls; j < comp_nodes[i]->size; j++) {
+                    if (comp_nodes[i]->sorted[j] == mid)
+                        tmp_eq++;
+                    else
+                        break;
+                }
                 ls += tmp_ls;
-                le += tmp_le;
-                // ls += binSearchLs(comp_nodes[i]->sorted, comp_nodes[i]->size, mid);
-                // le += binSearchLe(comp_nodes[i]->sorted, comp_nodes[i]->size, mid);
+                le += tmp_ls + tmp_eq;
+            }
+            if (ls < k && le >= k) {
+                break;
+            } else {
+                if (ls >= k) {
+                    high = mid-1;
+                } else if (le < k) {
+                    low = mid+1;
+                }
+                mid = (low+high)/2;
             }
         }
-        
-        // printf("%d %d\n", ls, le);
 
-        if (ls < k && le >= k) {
-            break;
-        } else {
-            if (ls >= k) {
-                high = mid-1;
-            } else if (le < k) {
-                low = mid+1;
-            }
-            mid = (low+high)/2;
-        }
     }
     return mid;
 }
@@ -249,6 +263,9 @@ int main(){
     int n, q;
     scanf("%d%d", &n, &q);
     int seg_len = (int) sqrt(n);
+    if (seg_len*seg_len < n) {
+        seg_len++;
+    }
     
     int *init_arr = malloc((n+2)*sizeof(int));
     for (int i=0; i<n; i++) {
@@ -260,11 +277,20 @@ int main(){
     for (int i=0; i<q; i++) {
         char cmd[10];
         scanf("%s", cmd);
-        if (strcmp(cmd, "Query") == 0) {
+        if (cmd[0] == 'Q') {
             int l, r, k;
             scanf("%d%d%d", &l, &r, &k);
             int result = query(list, l, r, k);
             printf("%d\n", result);
+        } else if (cmd[0] == 'I') {
+            int i, x;
+            scanf("%d%d", &i, &x);
+        } else if (cmd[0] == 'D') {
+            int i;
+            scanf("%d", &i);
+        } else if (cmd[0] == 'R') {
+            int l, r;
+            scanf("%d%d", &l, &r);
         }
     }
 

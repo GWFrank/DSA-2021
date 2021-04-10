@@ -3,7 +3,7 @@ from random import choice, randint
 cmds = ["Query"]
 n = 50000
 q = 50000
-arr = [randint(-50000,50000) for i in range(n)]
+arr = [randint(-100000,100000) for i in range(n)]
 
 input_f = "p6-in"
 sol_f = "p6-ans"
@@ -23,15 +23,20 @@ with open(sol_f, mode="w+") as f:
 
 with open(input_f, mode="a") as f1:
     with open(sol_f, mode="a") as f2:
+        # special
+        sliced = sorted(arr)
+
         for i in range(q):
             cmd = choice(cmds)
             N = len(arr)
             if cmd == "Query":
-                l = randint(1, N)
-                r = randint(l, N)
+                # l = randint(1, N)
+                # r = randint(l, N)
+                l = 1
+                r = N
                 k = randint(1, r-l+1)
                 full_cmd = f"{cmd} {l} {r} {k}\n"
-                sliced = sorted(arr[l-1:r])
                 f1.write(full_cmd)
+                # sliced = sorted(arr[l-1:r])
                 answer = str(sliced[k-1]) + "\n"
                 f2.write(answer)
