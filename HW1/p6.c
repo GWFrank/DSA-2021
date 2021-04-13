@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#define MAX_N 50005
 #define MAX_X 100000
 #define MIN_X -100000
 #define MAX_NODES 300
