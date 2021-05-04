@@ -19,9 +19,9 @@ typedef struct __tri__  {
 } tri;
 
 int cmpP(const void *a, const void *b) {
-    tri* tri_a_ptr = *(tri **)a;
-    tri* tri_b_ptr = *(tri **)b;
-    return tri_a_ptr->p - tri_b_ptr->p;
+    tri tri_a = *(tri*)a;
+    tri tri_b = *(tri*)b;
+    return tri_a.p - tri_b.p;
 }
 
 int lowbit(int x){
@@ -31,36 +31,39 @@ int lowbit(int x){
 int main() {
     generator.init();
     int t = generator.getT();
+    // /*
     while (t--) {
         int n, *p, *q, *r;
         generator.getData(&n, &p, &q, &r);
 
         // Sort triangles by p
-        tri** paths = malloc(n*sizeof(tri*));
+        // tri** paths = malloc(n*sizeof(tri*));
+        tri paths[10000];
         for (int i=0; i<n; i++) {
-            paths[i] = malloc(sizeof(tri));
-            paths[i]->p = p[i];
+            // paths[i] = malloc(sizeof(tri));
+            paths[i].p = p[i];
             if (q[i] < r[i]) {
-                paths[i]->q = q[i];
-                paths[i]->r = r[i];
+                paths[i].q = q[i];
+                paths[i].r = r[i];
             } else {
-                paths[i]->q = r[i];
-                paths[i]->r = q[i];
+                paths[i].q = r[i];
+                paths[i].r = q[i];
             }
         }
-        qsort(paths, n, sizeof(tri*), cmpP);
-
+        qsort(paths, n, sizeof(tri), cmpP);
+        printf("Hey\n");
         // Find seperated pairs to calculate intersecting pairs
         long long int sep = 0;
         // Use a Binary Index Tree to store r values
-        int* BIT = calloc(MAX_CORD-MIN_CORD+1+1, sizeof(int));
+        int BIT[2097153] = {0};
+        // int* BIT = calloc(MAX_CORD-MIN_CORD+1+1, sizeof(int));
         int* r_hold = malloc(n*sizeof(int));
         int hold_size = 0;
         int old_p = MIN_CORD-100;
         for (int i=0; i<n; i++) {
-            int p_i = paths[i]->p;
-            int q_i = paths[i]->q;
-            int r_i = paths[i]->r;
+            int p_i = paths[i].p;
+            int q_i = paths[i].q;
+            int r_i = paths[i].r;
             // Insert all holding r if proceed to a new p value
             if (p_i != old_p) {
                 while (hold_size) {
@@ -87,9 +90,7 @@ int main() {
         printf("%lld\n", ans);
 
         // Free allocated memories
-        for (int i=0; i<n; i++) { free(paths[i]); }
-        free(paths);
-        free(BIT);
         free(r_hold);
     }
+    // */
 }
