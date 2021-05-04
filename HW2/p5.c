@@ -8,9 +8,9 @@ https://en.wikipedia.org/wiki/Fenwick_tree
 #include <stdlib.h>
 #include "generator.h"
 
-#define MAX_CORD 1048576
+#define MAX_CORD 1048575
 #define MIN_CORD -1048576
-#define OFFSET 1048576+1
+#define OFFSET 1-(MIN_CORD)
 
 typedef struct __tri__  {
     int p;
@@ -19,8 +19,8 @@ typedef struct __tri__  {
 } tri;
 
 int cmpP(const void *a, const void *b) {
-    tri * tri_a_ptr = *(tri **)a;
-    tri * tri_b_ptr = *(tri **)b;
+    tri* tri_a_ptr = *(tri **)a;
+    tri* tri_b_ptr = *(tri **)b;
     return tri_a_ptr->p - tri_b_ptr->p;
 }
 
@@ -35,7 +35,7 @@ int main() {
         int n, *p, *q, *r;
         generator.getData(&n, &p, &q, &r);
 
-        // Sort triangles by p        
+        // Sort triangles by p
         tri** paths = malloc(n*sizeof(tri*));
         for (int i=0; i<n; i++) {
             paths[i] = malloc(sizeof(tri));
@@ -51,7 +51,7 @@ int main() {
         qsort(paths, n, sizeof(tri*), cmpP);
 
         // Find seperated pairs to calculate intersecting pairs
-        int sep = 0;
+        long long int sep = 0;
         // Use a Binary Index Tree to store r values
         int* BIT = calloc(MAX_CORD-MIN_CORD+1+1, sizeof(int));
         int* r_hold = malloc(n*sizeof(int));
@@ -79,15 +79,11 @@ int main() {
             // Add r_i to waiting line
             r_hold[hold_size] = r_i;
             hold_size++;
-            // printf("%d\n", sep);
-            // for (int k=0; k<hold_size; k++) {
-            //     printf("%d ", r_hold[k]);
-            // }
-            // printf("\n");
         }
 
-        long long int ans = n*(n-1)/2 - sep;
-
+        // Use long long int to avoid overflow for large n
+        long long int lln = (long long int) n;
+        long long int ans = lln*(lln-1)/2 - sep;
         printf("%lld\n", ans);
 
         // Free allocated memories
