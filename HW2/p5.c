@@ -11,12 +11,18 @@ https://en.wikipedia.org/wiki/Fenwick_tree
 #define MAX_CORD 1048575
 #define MIN_CORD -1048576
 #define OFFSET 1-(MIN_CORD)
+#define MAX_N 3000000
 
 typedef struct __tri__  {
     int p;
     int q;
     int r;
 } tri;
+
+int BIT[MAX_CORD-MIN_CORD+1+1];
+tri paths[MAX_N];
+int r_hold[MAX_N];
+
 
 int cmpP(const void *a, const void *b) {
     tri tri_a = *(tri*)a;
@@ -38,7 +44,6 @@ int main() {
 
         // Sort triangles by p
         // tri** paths = malloc(n*sizeof(tri*));
-        tri paths[10000];
         for (int i=0; i<n; i++) {
             // paths[i] = malloc(sizeof(tri));
             paths[i].p = p[i];
@@ -51,13 +56,16 @@ int main() {
             }
         }
         qsort(paths, n, sizeof(tri), cmpP);
-        printf("Hey\n");
+        // printf("Hey\n");
         // Find seperated pairs to calculate intersecting pairs
         long long int sep = 0;
         // Use a Binary Index Tree to store r values
-        int BIT[2097153] = {0};
+        // int BIT[MAX_CORD-MIN_CORD+1+1] = {0};
         // int* BIT = calloc(MAX_CORD-MIN_CORD+1+1, sizeof(int));
-        int* r_hold = malloc(n*sizeof(int));
+        for (int i=0; i<MAX_CORD-MIN_CORD+1+1; i++) {
+            BIT[i] = 0;
+        }
+        // int* r_hold = malloc(n*sizeof(int));
         int hold_size = 0;
         int old_p = MIN_CORD-100;
         for (int i=0; i<n; i++) {
@@ -90,7 +98,7 @@ int main() {
         printf("%lld\n", ans);
 
         // Free allocated memories
-        free(r_hold);
+        // free(r_hold);
     }
     // */
 }
