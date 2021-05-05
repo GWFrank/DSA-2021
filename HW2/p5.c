@@ -23,7 +23,6 @@ int BIT[MAX_CORD-MIN_CORD+1+1];
 tri paths[MAX_N];
 int r_hold[MAX_N];
 
-
 int cmpP(const void *a, const void *b) {
     tri tri_a = *(tri*)a;
     tri tri_b = *(tri*)b;
@@ -37,15 +36,12 @@ int lowbit(int x){
 int main() {
     generator.init();
     int t = generator.getT();
-    // /*
     while (t--) {
         int n, *p, *q, *r;
         generator.getData(&n, &p, &q, &r);
 
         // Sort triangles by p
-        // tri** paths = malloc(n*sizeof(tri*));
         for (int i=0; i<n; i++) {
-            // paths[i] = malloc(sizeof(tri));
             paths[i].p = p[i];
             if (q[i] < r[i]) {
                 paths[i].q = q[i];
@@ -60,12 +56,9 @@ int main() {
         // Find seperated pairs to calculate intersecting pairs
         long long int sep = 0;
         // Use a Binary Index Tree to store r values
-        // int BIT[MAX_CORD-MIN_CORD+1+1] = {0};
-        // int* BIT = calloc(MAX_CORD-MIN_CORD+1+1, sizeof(int));
         for (int i=0; i<MAX_CORD-MIN_CORD+1+1; i++) {
             BIT[i] = 0;
         }
-        // int* r_hold = malloc(n*sizeof(int));
         int hold_size = 0;
         int old_p = MIN_CORD-100;
         for (int i=0; i<n; i++) {
@@ -96,9 +89,5 @@ int main() {
         long long int lln = (long long int) n;
         long long int ans = lln*(lln-1)/2 - sep;
         printf("%lld\n", ans);
-
-        // Free allocated memories
-        // free(r_hold);
     }
-    // */
 }
