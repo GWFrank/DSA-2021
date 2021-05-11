@@ -25,37 +25,39 @@ typedef struct __prodLine__ {
     int size;
 } prodLine;
 
-void insertHeap(node* heap, int new) {
-    int child = new;
+void swapNode(node* heap, int idx_a, int idx_b) {
+    int tmp_idx = heap[idx_a].heap_idx;
+    heap[idx_a].heap_idx = heap[idx_b].heap_idx;
+    heap[idx_b].heap_idx = tmp_idx;
+    node tmp = heap[idx_a];
+    heap[idx_a] = heap[idx_b];
+    heap[idx_b] = tmp;
+}
+
+void pushProdLine(prodLine* prod_line, int height) {
+    node* heap = prod_line->heap;
+    prod_line->size++;
+    int idx = prod_line->size;
+    heap[idx].heap_idx = idx;
+    heap[idx].key = height;
+    heap[idx].prv = prod_line->deque.tail;
+    heap[idx].nxt = NULL;
+    if (prod_line->deque.tail) {
+        prod_line->deque.tail->nxt = &(prod_line->heap[idx]);
+    } else {
+        prod_line->deque.head = &(prod_line->heap[idx]);
+        prod_line->deque.tail = &(prod_line->heap[idx]);
+    }
+    int child = idx;
     int parent = child/2;
     while (parent) {
         if (heap[child].key > heap[parent].key) {
-            node tmp = heap[child];
-            heap[child] = heap[parent];
-            heap[parent] = tmp;
-            child = parent;
-            parent = child/2;
+            swapNode(heap, parent, child);
         } else {
             break;
         }
     }
 }
-
-void pushProdLine(prodLine* prod_line, int height) {
-    prod_line->size++;
-    prod_line->heap[prod_line->size].heap_idx = prod_line->size;
-    prod_line->heap[prod_line->size].key = height;
-    prod_line->heap[prod_line->size].prv = prod_line->deque.tail;
-    prod_line->heap[prod_line->size].nxt = NULL;
-    if (prod_line->deque.tail) {
-        prod_line->deque.tail->nxt = &(prod_line->heap[prod_line->size]);
-    } else {
-        prod_line->deque.head = &(prod_line->heap[prod_line->size]);
-        prod_line->deque.tail = &(prod_line->heap[prod_line->size]);
-    }
-    insertHeap(prod_line->heap, prod_line->size);
-}
-
 
 int main(){
     int T;
