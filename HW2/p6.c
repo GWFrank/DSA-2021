@@ -21,8 +21,9 @@ typedef struct __llist__ {
 
 typedef struct __prodLine__ {
     llist deque;
-    node* heap[MAX_N+1];
+    node** heap;
     int size;
+    int cap;
 } prodLine;
 
 void swapNode(prodLine* prod_line, int idx_a, int idx_b) {
@@ -62,6 +63,8 @@ void pushProdLine(prodLine* prod_line, int height) {
             break;
         }
     }
+
+    
 }
 
 void popInHeap(prodLine* prod_line, int og_size, int pop_idx) {
@@ -154,9 +157,88 @@ int isPopable(prodLine* prod_line, int key) {
 }
 
 void mergeLines(prodLine* lines, int main_l, int sub_l) {
-
+    if (lines[main_l].size >= lines[sub_l].size) {
+        if (lines[sub_l].size > 0) {
+            // Merge deque
+            lines[main_l].deque.tail->nxt = lines[sub_l].deque.head;
+            lines[sub_l].deque.head->prv = lines[main_l].deque.tail;
+            lines[main_l].deque.tail = lines[sub_l].deque.tail;
+            // Merge heap
+            for (int i=1; i<=lines[sub_l].size; i++) {
+                lines[main_l].heap[lines[main_l].size+i] = lines[sub_l].heap[i];
+                lines[main_l].heap[lines[main_l].size+i]->heap_idx = lines[main_l].size+i;
+                int child = lines[main_l].size+i;
+                int parent = child/2;
+                while (parent) {
+                    if (lines[main_l].heap[child]->key > lines[main_l].heap[parent]->key) {
+                        swapNode(&(lines[main_l]), parent, child);
+                        child = parent;
+                        parent = child/2;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        // Change prodLine size
+        lines[main_l].size += lines[sub_l].size;
+        lines[sub_l].size = 0;
+    } else {
+        if (lines[main_l].size > 0) {
+            // Merge deque
+            lines[main_l].deque.tail->nxt = lines[sub_l].deque.head;
+            lines[sub_l].deque.head->prv = lines[main_l].deque.tail;
+            lines[sub_l].deque.head = lines[main_l].deque.tail;
+            // Merge heap
+            for (int i=1; i<=lines[main_l].size; i++) {
+                lines[sub_l].heap[lines[sub_l].size+i] = lines[main_l].heap[i];
+                lines[sub_l].heap[lines[sub_l].size+i]->heap_idx = lines[sub_l].size+i;
+                int child = lines[sub_l].size+i;
+                int parent = child/2;
+                while (parent) {
+                    if (lines[sub_l].heap[child]->key > lines[sub_l].heap[parent]->key) {
+                        swapNode(&(lines[sub_l]), parent, child);
+                        child = parent;
+                        parent = child/2;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        // Change prodLine size
+        lines[sub_l].size += lines[main_l].size;
+        lines[main_l].size = 0;
+        /* debug
+        printf("+++++++++++\n");
+        printf("merging %d to %d\n", sub_l, main_l);
+        printf("main\n");
+        printf("deque:\n");
+        node* tmp_p = lines[sub_l].deque.head;
+        while (tmp_p) {
+            if (tmp_p == tmp_p->nxt) {
+                printf("Error\n");
+                break;
+            }
+            printf("%d -> ", tmp_p->key);
+            tmp_p = tmp_p->nxt;
+        }
+        printf("\nheap:\n");
+        for (int tmp_i=1; tmp_i<=lines[sub_l].size; tmp_i++) {
+            printf("%d -> ", lines[sub_l].heap[tmp_i]->key);
+        }
+        printf("\n");
+        printf("+++++++++++\n");
+        // */
+        // printf("%d %d\n", lines[main_l].size, lines[sub_l].size);
+        prodLine tmp = lines[main_l];
+        lines[main_l] = lines[sub_l];
+        lines[sub_l] = tmp;
+        // printf("%d %d\n", lines[main_l].size, lines[sub_l].size);
+    }
 }
 
+prodLine lines[MAX_L];
 
 int main(){
     int T;
@@ -165,19 +247,23 @@ int main(){
         int N, O, L;
         scanf("%d%d%d", &N, &O, &L);
         // Some variables
-        prodLine* lines = malloc(L*sizeof(prodLine));
+        // prodLine* lines = malloc(L*sizeof(prodLine));
         // prodLine lines[MAX_L];
         int line_trans[MAX_L];
         int ops[MAX_O][3];
         int final[MAX_N];
         int package_loc[MAX_N];
         int final_stage = 0;
-        // Initiate production lines
+        // Initialize production lines
         for (int j=0; j<L; j++) {
             line_trans[j] = j;
             lines[j].size = 0;
+            lines[j].cap = 1;
+            lines[j].heap = malloc((N+5)*sizeof(node*));
+            lines[j].deque.head = NULL;
+            lines[j].deque.tail = NULL;
         }
-        // Initiate package location
+        // Initialize package location
         for (int j=0; j<MAX_N; j++) {
             package_loc[j] = -1;
         }
@@ -201,29 +287,37 @@ int main(){
                 package_loc[height] = line_num;
                 pushProdLine(&(lines[line_num]), height);
             } else {
-                int main_line = ops[j][1];
-                int sub_line = ops[j][2];
+                int main_line = ops[j][2];
+                int sub_line = ops[j][1];
                 line_trans[sub_line] = main_line;
                 mergeLines(lines, main_line, sub_line);
             }
-            // debug
-            // printf("===========\n");
-            // printf("before\n");
-            // printf("deque:\n");
-            // node* tmp_p = lines[0].deque.head;
-            // while (tmp_p) {
-            //     printf("%d -> ", tmp_p->key);
-            //     if (tmp_p == tmp_p->nxt) {
-            //         printf("Error\n");
-            //         break;
-            //     }
-            //     tmp_p = tmp_p->nxt;
-            // }
-            // printf("\nheap:\n");
-            // for (int tmp_i=1; tmp_i<=lines[0].size; tmp_i++) {
-            //     printf("%d -> ", lines[0].heap[tmp_i]->key);
-            // }
-            // printf("\n===========\n");
+            /* debug
+            printf("===========\n");
+            printf("before\n");
+            for (int k=0; k<L; k++) {
+                if (lines[k].size == 0) {
+                    continue;
+                }
+                printf("number %d\n", k);
+                printf("deque:\n");
+                node* tmp_p = lines[k].deque.head;
+                while (tmp_p) {
+                    printf("%d -> ", tmp_p->key);
+                    if (tmp_p == tmp_p->nxt) {
+                        printf("Error\n");
+                        break;
+                    }
+                    tmp_p = tmp_p->nxt;
+                }
+                printf("\nheap:\n");
+                for (int tmp_i=1; tmp_i<=lines[k].size; tmp_i++) {
+                    printf("%d -> ", lines[k].heap[tmp_i]->key);
+                }
+                printf("\n");
+            }
+            printf("===========\n");
+            // */
             // Try to pop for final
             while (final_stage < N) {
                 if (final_stage > j) {
@@ -254,24 +348,6 @@ int main(){
                 // printf("%d\n", popable);
                 if (popable > 0) {
                     final_stage++;
-                    // debug
-                    // printf("===========\n");
-                    // printf("after\n");
-                    // printf("deque:\n");
-                    // node* tmp_p = lines[0].deque.head;
-                    // while (tmp_p) {
-                    //     if (tmp_p == tmp_p->nxt) {
-                    //         printf("Error\n");
-                    //         break;
-                    //     }
-                    //     printf("%d -> ", tmp_p->key);
-                    //     tmp_p = tmp_p->nxt;
-                    // }
-                    // printf("\nheap:\n");
-                    // for (int tmp_i=1; tmp_i<=lines[0].size; tmp_i++) {
-                    //     printf("%d -> ", lines[0].heap[tmp_i]->key);
-                    // }
-                    // printf("\n===========\n");
                 } else {
                     break;
                 }
@@ -291,8 +367,8 @@ int main(){
             for (int k=1; k<=lines[j].size; k++) {
                 free(lines[j].heap[k]);
             }
+            free(lines[j].heap);
         }
-        free(lines);
     }
     return 0;
 }
