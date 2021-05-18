@@ -5,12 +5,10 @@
 #define MAX_N 100005
 #define MAX_O 200005
 
-
 typedef struct __node__ {
     int key;
     struct __node__* nxt;
     struct __node__* prv;
-    int heap_idx;
 } node;
 
 typedef struct __llist__ {
@@ -18,237 +16,237 @@ typedef struct __llist__ {
     node* tail;
 } llist;
 
-
-typedef struct __prodLine__ {
-    llist deque;
-    node** heap;
+typedef struct __line__ {
     int size;
     int cap;
-} prodLine;
+    int* heap;
+    llist deque;
+} line;
 
-void swapNode(prodLine* prod_line, int idx_a, int idx_b) {
-    node** heap = prod_line->heap;
-    int tmp_idx = heap[idx_a]->heap_idx;
-    heap[idx_a]->heap_idx = heap[idx_b]->heap_idx;
-    heap[idx_b]->heap_idx = tmp_idx;
-    node* tmp = heap[idx_a];
-    heap[idx_a] = heap[idx_b];
-    heap[idx_b] = tmp;
+void addLList(llist* list, int key) {
+    node* new_node = malloc(sizeof(node));
+    new_node->key = key;
+    new_node->nxt = NULL;
+    if (list->tail) {
+        list->tail->nxt = new_node;
+    } else {
+        list->head = new_node;
+    }
+    new_node->prv = list->tail;
+    list->tail = new_node;
 }
 
-void pushProdLine(prodLine* prod_line, int height) {
-    node** heap = prod_line->heap;
-    prod_line->size++;
-    int idx = prod_line->size;
-    heap[idx] = malloc(sizeof(node));
-    heap[idx]->heap_idx = idx;
-    heap[idx]->key = height;
-    heap[idx]->prv = prod_line->deque.tail;
-    heap[idx]->nxt = NULL;
-    if (prod_line->deque.tail) {
-        prod_line->deque.tail->nxt = heap[idx];
-    } else {
-        prod_line->deque.head = heap[idx];
-    }
-    prod_line->deque.tail = heap[idx];
-
-    int child = idx;
+void insertHeap(int* heap, int size, int key) {
+    heap[size] = key;
+    int child = size;
     int parent = child/2;
     while (parent) {
-        if (heap[child]->key > heap[parent]->key) {
-            swapNode(prod_line, parent, child);
+        if (heap[child] > heap[parent]) {
+            heap[child] = heap[parent];
+            heap[parent] = key;
             child = parent;
             parent = child/2;
         } else {
             break;
         }
     }
-
-    
 }
 
-void popInHeap(prodLine* prod_line, int og_size, int pop_idx) {
-    node** heap = prod_line->heap;
-    swapNode(prod_line, og_size, pop_idx);
-    int p = pop_idx;
-    while (p < og_size/2) {
-        int c;
-        if (2*p+1 < og_size) {
-            c = (heap[2*p]->key > heap[2*p+1]->key) ?  2*p: 2*p+1;
+void pushLine(line* l, int key) {
+    l->size++;
+    while (l->size >= l->cap) {
+        l->cap *= 10;
+        l->heap = realloc(l->heap, l->cap*sizeof(int));
+    }
+    addLList(&(l->deque), key);
+    insertHeap(l->heap, l->size, key);
+}
+
+int popHead(llist* deque) {
+    node* tmp = deque->head;
+    int popped = tmp->key;
+    deque->head = deque->head->nxt;
+    if (deque->head) {
+        deque->head->prv = NULL;
+    } else {
+        deque->tail = NULL;
+    }
+    free(tmp);
+    return popped;
+}
+
+int popTail(llist* deque) {
+    node* tmp = deque->tail;
+    int popped = tmp->key;
+    deque->tail = deque->tail->prv;
+    if (deque->tail) {
+        deque->tail->nxt = NULL;
+    } else {
+        deque->head = NULL;
+    }
+    free(tmp);
+    return popped;
+}
+
+int popMax(int* heap, int size) {
+    int popped = heap[1];
+    heap[1] = heap[size];
+    int p=1;
+    // printf("size: %d\n", size);
+    while (2*p < size) {
+        int max_c;
+        if (2*p+1 < size) {
+            max_c = (heap[2*p] > heap[2*p+1]) ?  2*p: 2*p+1;
         } else {
-            c = 2*p;
+            max_c = 2*p;
         }
-        if (heap[p]->key < heap[c]->key) {
-            swapNode(prod_line, p, c);
-            p = c;
+        // printf("heap: %d %d\n", heap[p], heap[max_c]);
+        if (heap[p] < heap[max_c]) {
+            int tmp = heap[p];
+            heap[p] = heap[max_c];
+            heap[max_c] = tmp;
+            p = max_c;
         } else {
             break;
         }
     }
+    return popped;
 }
 
-int popHead(prodLine* prod_line) {
-    if (prod_line->size > 0) {
-        int pop_idx = prod_line->deque.head->heap_idx;
-        int popped_key = prod_line->deque.head->key;
-        popInHeap(prod_line, prod_line->size, pop_idx);
-        prod_line->size--;
-        prod_line->deque.head = prod_line->deque.head->nxt;
-        if (prod_line->deque.head) {
-            prod_line->deque.head->prv = NULL;
-        } else {
-            prod_line->deque.tail = NULL;
-        }
-        free(prod_line->heap[prod_line->size+1]);
-        return popped_key;
-    } else {
-        return -1;
+void cleanLine(line* l, int* p_loc) {
+    while (p_loc[l->deque.head->key] < 0) {
+        popHead(&(l->deque));
+    }
+    while (p_loc[l->deque.tail->key] < 0) {
+        popTail(&(l->deque));
+    }
+    while (p_loc[l->heap[1]] < 0) {
+        popMax(l->heap, l->size);
+        l->size--;
     }
 }
 
-int popTail(prodLine* prod_line) {
-    if (prod_line->size > 0) {
-        int pop_idx = prod_line->deque.tail->heap_idx;
-        int popped_key = prod_line->deque.tail->key;
-        popInHeap(prod_line, prod_line->size, pop_idx);
-        prod_line->size--;
-        prod_line->deque.tail = prod_line->deque.tail->prv;
-        if (prod_line->deque.tail) {
-            prod_line->deque.tail->nxt = NULL;
-        } else {
-            prod_line->deque.head = NULL;
-        }
-        return popped_key;
-    } else {
-        return -1;
-    }
-}
-
-int popMax(prodLine* prod_line) {
-    if (prod_line->size > 0) {
-        int pop_idx = 1;
-        int popped_key = prod_line->heap[1]->key;
-        node* node_ptr = prod_line->heap[1];
-        popInHeap(prod_line, prod_line->size, pop_idx);
-        prod_line->size--;
-        if (node_ptr->prv) {
-            node_ptr->prv->nxt = node_ptr->nxt;
-        }
-        if (node_ptr->nxt) {
-            node_ptr->nxt->prv = node_ptr->prv;
-        }
-        return popped_key;
-    } else {
-        return -1;
-    }
-}
-
-int isPopable(prodLine* prod_line, int key) {
-    // 1 => head, 2 => tail, 3 => max, 0 => none
-    if (prod_line->deque.head->key == key) {
+int isPopable(line* l, int key, int* p_loc) {
+    cleanLine(l, p_loc);
+    if (key == l->deque.head->key) {
+        popHead(&(l->deque));
+        p_loc[key] = -1;
         return 1;
-    } else if (prod_line->deque.tail->key == key) {
-        return 2;
-    } else if (prod_line->heap[1]->key == key) {
-        return 3;
+    } else if (key == l->deque.tail->key) {
+        popTail(&(l->deque));
+        p_loc[key] = -1;
+        return 1;
+    } else if (key == l->heap[1]) {
+        popMax(l->heap, l->size);
+        l->size--;
+        p_loc[key] = -1;
+        return 1;
     } else {
         return 0;
     }
 }
 
-void mergeLines(prodLine* lines, int main_l, int sub_l) {
-    if (lines[main_l].size >= lines[sub_l].size) {
-        if (lines[sub_l].size > 0) {
-            // Merge deque
-            lines[main_l].deque.tail->nxt = lines[sub_l].deque.head;
-            lines[sub_l].deque.head->prv = lines[main_l].deque.tail;
-            lines[main_l].deque.tail = lines[sub_l].deque.tail;
-            // Merge heap
-            for (int i=1; i<=lines[sub_l].size; i++) {
-                lines[main_l].heap[lines[main_l].size+i] = lines[sub_l].heap[i];
-                lines[main_l].heap[lines[main_l].size+i]->heap_idx = lines[main_l].size+i;
-                int child = lines[main_l].size+i;
-                int parent = child/2;
-                while (parent) {
-                    if (lines[main_l].heap[child]->key > lines[main_l].heap[parent]->key) {
-                        swapNode(&(lines[main_l]), parent, child);
-                        child = parent;
-                        parent = child/2;
-                    } else {
-                        break;
-                    }
-                }
-            }
+void merge(line* main_l, line* sub_l, int* p_loc) {
+    // cleanLine(sub_l, p_loc);
+    // cleanLine(main_l, p_loc);
+    int rev = 0;
+    if (main_l->size < sub_l->size) {
+        rev = 1;
+    }
+    if (rev) {
+        line* tmp = main_l;
+        main_l = sub_l;
+        sub_l = tmp;
+    }
+    if (!rev) {
+        if (main_l->deque.head) {
+            main_l->deque.tail->nxt = sub_l->deque.head;
+        } else {
+            main_l->deque.head = sub_l->deque.head;
         }
-        // Change prodLine size
-        lines[main_l].size += lines[sub_l].size;
-        lines[sub_l].size = 0;
+        if (sub_l->deque.head) {
+            sub_l->deque.head->prv = main_l->deque.tail;
+            main_l->deque.tail = sub_l->deque.tail;
+        }
     } else {
-        if (lines[main_l].size > 0) {
-            // Merge deque
-            lines[main_l].deque.tail->nxt = lines[sub_l].deque.head;
-            lines[sub_l].deque.head->prv = lines[main_l].deque.tail;
-            lines[sub_l].deque.head = lines[main_l].deque.tail;
-            // Merge heap
-            for (int i=1; i<=lines[main_l].size; i++) {
-                lines[sub_l].heap[lines[sub_l].size+i] = lines[main_l].heap[i];
-                lines[sub_l].heap[lines[sub_l].size+i]->heap_idx = lines[sub_l].size+i;
-                int child = lines[sub_l].size+i;
-                int parent = child/2;
-                while (parent) {
-                    if (lines[sub_l].heap[child]->key > lines[sub_l].heap[parent]->key) {
-                        swapNode(&(lines[sub_l]), parent, child);
-                        child = parent;
-                        parent = child/2;
-                    } else {
-                        break;
-                    }
-                }
+        if (main_l->deque.head) {
+            main_l->deque.head->prv = sub_l->deque.tail;
+        } else {
+            main_l->deque.tail = sub_l->deque.tail;
+        }
+
+        if (sub_l->deque.head) {
+            sub_l->deque.tail->nxt = main_l->deque.head;
+            main_l->deque.head = sub_l->deque.head;
+        }
+    }
+    
+    if (!rev) {
+        node* np = sub_l->deque.head;
+        while (np) {
+            main_l->size++;
+            while (main_l->size >= main_l->cap) {
+                main_l->cap *= 10;
+                main_l->heap = realloc(main_l->heap, main_l->cap*sizeof(int));
             }
+            int popped = np->key;
+            if (p_loc[popped] >= 0)
+                insertHeap(main_l->heap, main_l->size, popped);
+            else
+                main_l->size--;
+            np = np->nxt;
         }
-        // Change prodLine size
-        lines[sub_l].size += lines[main_l].size;
-        lines[main_l].size = 0;
-        /* debug
-        printf("+++++++++++\n");
-        printf("merging %d to %d\n", sub_l, main_l);
-        printf("main\n");
-        printf("deque:\n");
-        node* tmp_p = lines[sub_l].deque.head;
-        while (tmp_p) {
-            if (tmp_p == tmp_p->nxt) {
-                printf("Error\n");
-                break;
+    } else {
+        node* np = sub_l->deque.tail;
+        while (np) {
+            main_l->size++;
+            while (main_l->size >= main_l->cap) {
+                main_l->cap *= 10;
+                main_l->heap = realloc(main_l->heap, main_l->cap*sizeof(int));
             }
-            printf("%d -> ", tmp_p->key);
-            tmp_p = tmp_p->nxt;
+            int popped = np->key;
+            if (p_loc[popped] >= 0)
+                insertHeap(main_l->heap, main_l->size, popped);
+            else
+                main_l->size--;
+            np = np->prv;
         }
-        printf("\nheap:\n");
-        for (int tmp_i=1; tmp_i<=lines[sub_l].size; tmp_i++) {
-            printf("%d -> ", lines[sub_l].heap[tmp_i]->key);
-        }
-        printf("\n");
-        printf("+++++++++++\n");
-        // */
-        // printf("%d %d\n", lines[main_l].size, lines[sub_l].size);
-        prodLine tmp = lines[main_l];
-        lines[main_l] = lines[sub_l];
-        lines[sub_l] = tmp;
-        // printf("%d %d\n", lines[main_l].size, lines[sub_l].size);
+    }
+
+    if (rev) {
+        line* tmp = main_l;
+        main_l = sub_l;
+        sub_l = tmp;
+        line tmp_l = *main_l;
+        *main_l = *sub_l;
+        *sub_l = tmp_l;
+    }
+
+    sub_l->deque.head = NULL;
+    sub_l->deque.tail = NULL;
+    sub_l->size = 0;
+    free(sub_l->heap);
+}
+
+int findSet(int* line_trans, int id) {
+    if (id == line_trans[id]) {
+        return id;
+    } else {
+        line_trans[id] = findSet(line_trans, line_trans[id]);
+        return line_trans[id];
     }
 }
 
-prodLine lines[MAX_L];
 
 int main(){
     int T;
     scanf("%d", &T);
+    // printf("Hey\n");
     for (int i=0; i<T; i++) {
         int N, O, L;
         scanf("%d%d%d", &N, &O, &L);
         // Some variables
-        // prodLine* lines = malloc(L*sizeof(prodLine));
-        // prodLine lines[MAX_L];
+        line lines[MAX_L];
         int line_trans[MAX_L];
         int ops[MAX_O][3];
         int final[MAX_N];
@@ -259,12 +257,12 @@ int main(){
             line_trans[j] = j;
             lines[j].size = 0;
             lines[j].cap = 1;
-            lines[j].heap = malloc((N+5)*sizeof(node*));
             lines[j].deque.head = NULL;
             lines[j].deque.tail = NULL;
+            lines[j].heap = malloc(2*sizeof(int));
         }
         // Initialize package location
-        for (int j=0; j<MAX_N; j++) {
+        for (int j=1; j<=N; j++) {
             package_loc[j] = -1;
         }
         // Read all operations and store
@@ -285,39 +283,14 @@ int main(){
                 int height = ops[j][1];
                 int line_num = ops[j][2];
                 package_loc[height] = line_num;
-                pushProdLine(&(lines[line_num]), height);
+                pushLine(&(lines[line_num]), height);
             } else {
-                int main_line = ops[j][2];
-                int sub_line = ops[j][1];
-                line_trans[sub_line] = main_line;
-                mergeLines(lines, main_line, sub_line);
+                int m_idx = ops[j][2];
+                int s_idx = ops[j][1];
+                line_trans[s_idx] = m_idx;
+                merge(&(lines[m_idx]), &(lines[s_idx]), package_loc);
             }
-            /* debug
-            printf("===========\n");
-            printf("before\n");
-            for (int k=0; k<L; k++) {
-                if (lines[k].size == 0) {
-                    continue;
-                }
-                printf("number %d\n", k);
-                printf("deque:\n");
-                node* tmp_p = lines[k].deque.head;
-                while (tmp_p) {
-                    printf("%d -> ", tmp_p->key);
-                    if (tmp_p == tmp_p->nxt) {
-                        printf("Error\n");
-                        break;
-                    }
-                    tmp_p = tmp_p->nxt;
-                }
-                printf("\nheap:\n");
-                for (int tmp_i=1; tmp_i<=lines[k].size; tmp_i++) {
-                    printf("%d -> ", lines[k].heap[tmp_i]->key);
-                }
-                printf("\n");
-            }
-            printf("===========\n");
-            // */
+
             // Try to pop for final
             while (final_stage < N) {
                 if (final_stage > j) {
@@ -327,25 +300,15 @@ int main(){
                 int target_id = package_loc[target_package];
                 if (target_id < 0) {
                     break;
-                } else {
-                    while (target_id != line_trans[target_id]) {
-                        target_id = line_trans[target_id];
-                    }
                 }
-                prodLine* target_line = &(lines[target_id]);
-                int popable = isPopable(target_line, target_package);
-                switch (popable) {
-                    case 1:
-                        popHead(target_line);
-                        break;
-                    case 2:
-                        popTail(target_line);
-                        break;
-                    case 3:
-                        popMax(target_line);
-                        break;
-                }
-                // printf("%d\n", popable);
+                target_id = findSet(line_trans, target_id);
+                // while (target_id != line_trans[target_id]) {
+                //     target_id = line_trans[target_id];
+                // }
+                
+                line* target_line = &(lines[target_id]);
+                int popable = isPopable(target_line, target_package, package_loc);
+                
                 if (popable > 0) {
                     final_stage++;
                 } else {
@@ -364,10 +327,9 @@ int main(){
         }
 
         for (int j=0; j<L; j++) {
-            for (int k=1; k<=lines[j].size; k++) {
-                free(lines[j].heap[k]);
+            if (lines[j].size) {
+                free(lines[j].heap);
             }
-            free(lines[j].heap);
         }
     }
     return 0;
