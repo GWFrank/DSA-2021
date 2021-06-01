@@ -32,7 +32,8 @@
 - `node.key`
 - `node.color`
 
-
-
 ## Rotation
 
+
+
+## Insertion
