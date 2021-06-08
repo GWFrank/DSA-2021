@@ -43,37 +43,66 @@ function B_Tree_search(x, k)
 CPU Time: $t\log_t{n}$
 Disk I/O: $\log_t{n}$
 
+## Split child
+
+`split_child`
+
+1. 把 `x.key` 中間的那個 `key` 往上面一層丟 (原本是 root 的話就長一層)
+2. 其他的 `key` 分好，往下做
+
+```pseudocode
+function B_Tree_split_child(x, i) /* split x's i-th child */
+	z = allocate_node()
+	y = x.c_i
+	z.leaf = y.leaf
+	z.n = t-1
+	for j = 1 to t-1
+		z.key_j = y.key_{j+t} /* get the second half of keys */
+	if not y.leaf
+		for j=1 to t
+			z.c_j = y.c_{j+t}
+	y.n = t-1
+	for j = x.n+1 downto i+1
+		x.c_{j+1} = x.c_j /* move childs back to get space */
+	x.c_{i+1} = z
+	for j = x.n downto i
+		x.key_{j+1} = x.key_j /* move keys back to get space */
+	x.key_i = y.key_t
+	x.n += 1
+	DISK_WRITE(y)
+	DISK_WRITE(Z)
+```
+
 ## Insert
 
 先用 `search` 找到應該放在哪裡，把路徑上的 full node 由 root 往 leaf 做 `split_child`
-
-> `split_child`
->
-> 1. 把 `x.key` 中間的那個 `key` 往上面一層丟 (原本是 root 的話就長一層)
-> 2. 其他的 `key` 分好，往下做
->
-> ```pseudocode
-> function B_Tree_split_child(x, i) /* split x's i-th child */
-> 	z = allocate_node()
-> 	y = x.c_i
-> 	z.leaf = y.leaf
-> 	z.n = t-1
-> 	for j = 1 to t-1
-> 		z.key_j = y.key_{j+t} /* get the second half of keys */
-> 	if not y.leaf
-> 		for j=1 to t
-> 			z.c_j = y.c_{j+t}
-> 	y.n = t-1
-> 	for j = x.n+1 downto i+1
-> 		x.c_{j+1} = x.c_j /* move childs back to get space */
-> 	x.c_{i+1} = z
-> 	for j = x.n downto i
-> 		x.key_{j+1} = x.key_j /* move keys back to get space */
-> 	x.key_i = y.key_t
-> 	x.n += 1
-> 	DISK_WRITE(y)
-> 	DISK_WRITE(Z)
-> ```
-
 最後再把要 insert 的值丟進去
+
+```pseudocode
+function B_Tree_insert(T, k)
+	r = T.root
+	if r.n == 2*t-1
+		s = allocate_node()
+		T.root = s
+		s.leaf = False
+		s.n = 0
+		s.c_1 = r
+		B_Tree_split_child(s, 1)
+		B_Tree_insert_nonfull(s, k)
+	else
+		B_Tree_insert_nonfull(r, k)
+```
+
+## Insert nonfull
+
+```pseudocode
+```
+
+## Delete
+
+
+
+
+
+
 
