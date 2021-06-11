@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+<title></title>
+</head>
+<body><pre><code class='language-pseudocode' lang='pseudocode'>function B_Tree_merge(x, m)
+    // Merge key[m] down
+    y = x.c[m]
+    z = x.c[m+1]
+    y.key[t] = m
+    for j=1 to t-1
+        y.key[t+j] = z.key[j]
+    if not y.left
+        for j=1 to t
+            y.c[t+j] = z.c[j]
+    y.n = 2*t-1
+    free(z)
+    for j=m to x.n-1
+        x.key[j] = x.key[j-1]
+    for j=m+1 to x.n
+        x.c[j] = x.c[j+1]
+    x.n -= 1
+    DISK_WRITE(y)
+    DISK_WRITE(z)
+
+
+function B_Tree_sub_delete(x, k)
+    i = 1
+    if x.leaf
+        // case 1
+        while i &lt;= x.n and x.key[i] &lt; k
+            i += 1
+        while i &lt;= x.n
+            x.key[i] = x.key[i+1]
+            i += 1
+        x.n += 1
+        DISK_WRITE(x)
+    else
+        while i &lt;= x.n and x.key[i] &lt; k
+            i += 1
+        if x.key[i] == k
+            // case 2
+            DISK_READ(x.c[i])
+            DISK_READ(x.c[i+1])
+            if x.c[i].n &gt;= t
+                // case 2a
+                pre = x.c[i]
+                while pre.c[pre.n+1]
+                    pre = pre.c[pre.n+1]
+                k_prime = pre.key[pre.n]
+                x.key[i] = k_prime
+                B_Tree_sub_delete(x.c[i], k_prime)
+            else if x.c[i+1] &gt;= t
+                // case 2b
+                suc = x.c[i+1]
+                while suc.c[1]
+                    suc = suc.c[1]
+                k_prime = suc.key[1]
+                key[i] = k_prime
+                B_Tree_sub_delete(x.c[i+1], k_prime)
+            else
+                // case 2c
+                B_Tree_merge(x, i)
+                B_Tree_sub_delete(x.c[i], k)
+        else
+            // case 3
+            DISK_READ(x.c[i])
+            if x.c[i].n &gt;= t
+                B_Tree_sub_delete(x.c[i], k)
+            else
+                l_exist = False; l_few = True
+                r_exist = False; r_few = True
+                // case 3a
+                if i-1 &gt;= 1
+                    DISK_READ(x.c[i-1])
+                    l_exist = True
+                    if x.c[i-1].n &gt;= t
+                        l_few = False
+                        y = x.c[i]
+                        z = x.c[i-1]
+                        for j=t to 2
+                            y.key[j] = y.key[j-1]
+                        y.key[1] = x.key[i]
+                        x.key[i] = z.key[z.n]
+                        if not y.leaf
+                            for j=t+1 to 2
+                                y.c[j] = y.c[j-1]
+                            y.c[1] = z.c[z.n+1]
+                        y.n += 1
+                        z.n -= 1
+                        B_Tree_sub_delete(y, k)
+                if i+1 &lt;= x.n+1
+                    DISK_READ(x.c[i+1])
+                    r_exist = True
+                    if x.c[i+1].n &gt;= t
+                        r_few = False
+                        y = x.c[i]
+                        z = x.c[i+1]
+                        y.key[t] = x.key[i]
+                        x.key[i] = z.key[1]
+                        for j=1 to z.n-1
+                            z.key[j] = z.key[j+1]
+                        if not y.leaf
+                            y.c[t+1] = z.c[1]
+                            for j=1 to z.n
+                                z.c[j] = z.c[j+1]
+                        y.n += 1
+                        z.n -= 1
+                        B_Tree_sub_delete(y, k)
+                // case 3b
+                if l_few and r_few
+                    if l_exist
+                        B_Tree_merge(x, i-1)
+                        B_Tree_sub_delete(x.c[i-1], k)
+                    else
+                        B_Tree_merge(x, i)
+                        B_Tree_sub_delete(x.c[i], k)
+
+
+function B_Tree_delete(T, k)
+    r = T.root
+    if r.n == 1
+        DISK_READ(r.c[1])
+        DISK_READ(r.c[2])
+        if r.c[1].n &lt; t and r.c[2].n &lt; t
+            // Special case that decreases height
+            B_Tree_merge(r, 1)
+            T.root = r.c[1]
+            free(r)
+            B_Tree_sub_delete(T.root, k)
+        else
+            B_Tree_sub_delete(r, k)
+    else
+        B_Tree_sub_delete(r, k)
+
+</code></pre>
+<p>&nbsp;</p>
+</body>
+</html>
