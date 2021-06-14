@@ -1,3 +1,8 @@
+/*
+Refs:
+B09902100
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -130,39 +135,6 @@ int main(){
     
     llist* edge_list = newLList();
     int result = solve(N, list_pos, adj_list, edge_list);
-    
-    /*
-    int i=1;
-    while (i<=N) {
-        int idx1 = list_pos[i];
-        if (idx1 < 0) {
-            i++;
-            continue;
-        }
-        int adj_v = adj_list[i][idx1];
-        int idx2 = list_pos[adj_v];
-        if (idx2 < 0) {
-            i++;
-            continue;
-        }
-        int adj_adj = adj_list[adj_v][idx2];
-        if (adj_adj == i) {
-            list_pos[i]--; list_pos[adj_v]--;
-            addHead(edge_list, i, adj_v);
-            i = (i < adj_v) ? i : adj_v;
-        } else {
-            i++;
-            continue;
-        }
-    }
-    int clear = 1;
-    for (int i=1; i<=N; i++) {
-        if (list_pos[i] >= 0) {
-            clear = 0;
-            break;
-        }
-    }
-    */
 
     if (result) {
         printf("Yes\n");
