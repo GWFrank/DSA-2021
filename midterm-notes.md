@@ -75,7 +75,7 @@
 - Heap sort
   - build heap $\rightarrow$ use heap to select largest
   - time complexity:$O(n\lg(n))+O(n\lg(n))$
-  - build heap can be in linear time if optimizly implemented
+  - build heap can be in linear time if optimally implemented
 
 ---
 

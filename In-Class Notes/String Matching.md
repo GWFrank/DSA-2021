@@ -67,3 +67,13 @@ function Rabin_Karp_Matcher(T,P,d,q)
 
 ---
 
+## KMP Algorithm
+
+中心思想：如果 `P` 有一些重複的資訊，如`p=ABAB`，在match成功後可以利用這個資訊一次跳多格一點。
+
+最重要的是 prefix function `pi`，對 `P` 來說，`pi(k)=x` 代表 `P` 的前 `x` 和 `P[..k]` 的後 `x` 一樣。 
+
+實際在match的時候，如碰到不符合，就用 `pi` 把matched character counter往回跳，跳到符合的時候再繼續跑。
+
+
+
