@@ -20,4 +20,3 @@
 - binary search
   - using cut multiple times
   - need both ordered (for cut) and array (for fast access to compare)
-
